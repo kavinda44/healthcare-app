@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html class="light" lang="en"> <head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vitalsync AI: Health Risk Predictor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class", // Enable class-based dark mode
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#047878",
+                        "teal-600": "#047878", 
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#112121", // Dark background
+                        "risk-high": "#ef4444", 
+                        "risk-medium": "#f97316",
+                        "risk-low": "#10b981", 
+                    },
+                    fontFamily: {
+                        "display": ["Poppins", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #047878;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        input[type=range]::-webkit-slider-thumb { background: #047878; }
+        input[type=range]::-moz-range-thumb { background: #047877; }
+
+        .tooltip-container { position: relative; display: inline-block; }
+        .tooltip-text {
+            visibility: hidden; background-color: #333; color: #fff;
+            text-align: center; border-radius: 6px; padding: 5px 10px;
+            position: absolute; z-index: 10; bottom: 125%; left: 50%;
+            transform: translateX(-50%); width: 180px; opacity: 0;
+            transition: opacity 0.3s; white-space: normal;
+        }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display" onload="initializeSliders(); checkDarkModePreference()">
+<div class="relative flex h-screen w-full flex-col group/design-root overflow-y-auto overflow-x-hidden">
+<div class="lg:flex h-full w-full">
+<aside class="w-full lg:w-[380px] bg-white dark:bg-gray-900 lg:shadow-xl h-auto lg:h-full flex flex-col">
+    <div class="p-6 md:p-8 flex-grow overflow-y-auto no-scrollbar">
+        <div class="flex items-center gap-3 mb-8">
+            <img src="1.png" alt="logo" class="h-16 w-auto"/> <h1 class="text-xl font-bold text-gray-800 dark:text-white">Vitalsync AI</h1>
+        </div>
+        <div class="space-y-8">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">1. Demographics</h2>
+                <div class="space-y-4">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2">Age</p>
+                        <input id="input-age" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 placeholder:text-gray-400 p-3 text-sm font-normal leading-normal shadow-sm" max="100" min="18" placeholder="e.g., 35" type="number" value="45"/>
+                    </label>
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2">Gender</p>
+                        <select id="input-gender" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 p-3 text-sm font-normal leading-normal shadow-sm">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">2. Vitals &amp; Labs</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex flex-col">
+                        <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2 flex items-center">
+                            Glucose
+                            <span class="tooltip-container ml-1">
+                                <span class="material-symbols-outlined text-gray-400 text-base cursor-help">info</span>
+                                <span class="tooltip-text">current blood sugar level</span>
+                            </span>
+                        </p>
+                        <input id="input-glucose" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 placeholder:text-gray-400 p-3 text-sm font-normal leading-normal shadow-sm" placeholder="mg/dL" type="number" value="130"/>
+                    </label>
+                    <label class="flex flex-col">
+                        <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2 flex items-center">
+                            Blood Pressure
+                            <span class="tooltip-container ml-1">
+                                <span class="material-symbols-outlined text-gray-400 text-base cursor-help">info</span>
+                                <span class="tooltip-text">Systolic BP</span>
+                            </span>
+                        </p>
+                        <input id="input-bp" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 placeholder:text-gray-400 p-3 text-sm font-normal leading-normal shadow-sm" placeholder="mmHg" type="number" value="140"/>
+                    </label>
+                    <label class="flex flex-col">
+                        <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2">BMI</p>
+                        <input id="input-bmi" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 placeholder:text-gray-400 p-3 text-sm font-normal leading-normal shadow-sm" placeholder="kg/m²" type="number" step="0.1" value="32.5"/>
+                    </label>
+                    <label class="flex flex-col">
+                        <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2">Cholesterol</p>
+                        <input id="input-cholesterol" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 placeholder:text-gray-400 p-3 text-sm font-normal leading-normal shadow-sm" placeholder="mg/dL" type="number" value="230"/>
+                    </label>
+                    <label class="flex flex-col md:col-span-2">
+                        <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2 flex items-center">
+                            HbA1c
+                            <span class="tooltip-container ml-1">
+                                <span class="material-symbols-outlined text-gray-400 text-base cursor-help">info</span>
+                                <span class="tooltip-text">Average blood sugar (past 2–3 months)</span>
+                            </span>
+                        </p>
+                        <input id="input-hba1c" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 placeholder:text-gray-400 p-3 text-sm font-normal leading-normal shadow-sm" placeholder="%" type="number" step="0.1" value="6.5"/>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">3. Lifestyle &amp; History</h2>
+                <div class="space-y-6">
+                    <label class="flex flex-col space-y-2">
+                        <div class="flex justify-between">
+                            <p class="text-gray-800 dark:text-gray-300 text-sm font-medium">Sleep Hours</p>
+                            <span id="sleep-value" class="text-sm text-gray-600 dark:text-gray-400">8 hrs</span>
+                        </div>
+                        <input id="input-sleep" oninput="updateRangeValue('input-sleep', 'sleep-value', ' hrs')" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer" max="12" min="4" step="0.5" type="range" value="8"/>
+                    </label>
+                    <label class="flex flex-col space-y-2">
+                        <div class="flex justify-between">
+                            <p class="text-gray-800 dark:text-gray-300 text-sm font-medium">Physical Activity (mins/week)</p>
+                            <span id="activity-value" class="text-sm text-gray-600 dark:text-gray-400">150 mins</span>
+                        </div>
+                        <input id="input-activity" oninput="updateRangeValue('input-activity', 'activity-value', ' mins')" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer" max="500" min="0" step="10" type="range" value="150"/>
+                    </label>
+                    <div class="grid grid-cols-3 gap-4">
+                        <label class="flex flex-col">
+                            <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2">Smoking</p>
+                            <select id="input-smoking" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 p-3 text-sm font-normal leading-normal shadow-sm">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </label>
+                        <label class="flex flex-col">
+                            <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2">Alcohol</p>
+                            <select id="input-alcohol" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 p-3 text-sm font-normal leading-normal shadow-sm">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </label>
+                        <label class="flex flex-col">
+                            <p class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2 flex items-center">
+                                Family History
+                                <span class="tooltip-container ml-1">
+                                    <span class="material-symbols-outlined text-gray-400 text-base cursor-help">info</span>
+                                    <span class="tooltip-text">family history of chronic disease</span>
+                                </span>
+                            </p>
+                            <select id="input-family" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 dark:text-gray-200 focus:outline-0 focus:ring-2 focus:ring-teal-600 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 p-3 text-sm font-normal leading-normal shadow-sm">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="p-6 md:p-8 border-t border-gray-200 dark:border-gray-800 sticky bottom-0 bg-white dark:bg-gray-900 lg:static">
+        <button id="predict-button" onclick="predictRisk()" class="flex min-w-[84px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-4 bg-teal-600 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out">
+            <span id="loading-spinner" class="material-symbols-outlined mr-2 animate-spin hidden">autorenew</span>
+            <span id="button-text" class="truncate">PREDICT HEALTH RISK</span>
+        </button>
+        <div class="mt-4 text-center">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Disclaimer: This prediction is for informational purposes only. Consult a healthcare professional for medical advice.</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Data credit: Kaggle Dataset</p>
+        </div>
+    </div>
+</aside>
+<main class="flex-1 bg-background-light dark:bg-background-dark p-6 md:p-8 overflow-y-auto">
+<div id="results-container" class="max-w-4xl mx-auto">
+<header class="mb-8 pb-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+    <div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-800 dark:text-white">
+            Health Profile & Predictive Outcome
+        </h2>
+        <p class="text-gray-600 dark:text-gray-400 mt-2 flex items-center">
+            <span class="material-symbols-outlined text-teal-600 mr-2">tune</span>
+            Risk Summary & Feature Insights
+        </p>
+    </div>
+    <button id="dark-mode-toggle" onclick="toggleDarkMode()" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-600">
+        <span id="dark-mode-icon" class="material-symbols-outlined">dark_mode</span>
+    </button>
+</header>
+<div class="p-8 bg-white dark:bg-gray-800 shadow-xl rounded-xl text-center min-h-[400px] flex items-center justify-center">
+<p class="text-gray-500 dark:text-gray-400 text-lg">Enter patient details on the left to see the risk assessment and key factors.</p>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+<script>
+    // --- API Configuration ---
+    const API_ENDPOINT = 'http://127.0.0.1:5000/api/predict';
+
+    // Decoded Labels from LabelEncoder (MUST match the order in your label_encoder.pkl)
+    const ENCODED_CLASSES = [
+        'Arthritis', 'Asthma', 'Cancer', 'Diabetes', 'Healthy', 'Hypertension', 'Obesity'
+    ];
+    
+    // --- UI HELPER FUNCTIONS ---
+    function updateRangeValue(inputId, spanId, suffix) {
+        document.getElementById(spanId).textContent = document.getElementById(inputId).value + suffix;
+    }
+
+    function initializeSliders() {
+        // Initialize all range inputs and display their current value
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            const spanId = input.id.replace('input-', '') + '-value';
+            const suffix = input.id === 'input-sleep' ? ' hrs' : ' mins';
+            if (document.getElementById(spanId)) {
+                 document.getElementById(spanId).textContent = input.value + suffix;
+            }
+        });
+    }
+
+    function setPredicting(isPredicting) {
+        const button = document.getElementById('predict-button');
+        const spinner = document.getElementById('loading-spinner');
+        const buttonText = document.getElementById('button-text');
+        
+        button.disabled = isPredicting;
+        if (isPredicting) {
+            spinner.classList.remove('hidden');
+            buttonText.textContent = 'CONNECTING TO API...';
+        } else {
+            spinner.classList.add('hidden');
+            buttonText.textContent = 'PREDICT HEALTH RISK';
+        }
+    }
+
+    // --- DARK MODE LOGIC ---
+    function checkDarkModePreference() {
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.getElementById('dark-mode-icon').textContent = 'light_mode';
+        } else {
+            document.documentElement.classList.remove('dark');
+             document.getElementById('dark-mode-icon').textContent = 'dark_mode';
+        }
+    }
+
+    function toggleDarkMode() {
+        const htmlElement = document.documentElement;
+        const iconElement = document.getElementById('dark-mode-icon');
+        
+        if (htmlElement.classList.contains('dark')) {
+            htmlElement.classList.remove('dark');
+            localStorage.theme = 'light';
+            iconElement.textContent = 'dark_mode';
+        } else {
+            htmlElement.classList.add('dark');
+            localStorage.theme = 'dark';
+            iconElement.textContent = 'light_mode';
+        }
+    }
+
+    // Call on load to set initial state
+    checkDarkModePreference();
+
+    // --- CORE PREDICTION LOGIC ---
+    function collectPatientData() {
+        // Collect raw values from the UI (matching the features your Python server expects)
+        return {
+            Age: parseInt(document.getElementById('input-age').value),
+            Gender: document.getElementById('input-gender').value,
+            Glucose: parseFloat(document.getElementById('input-glucose').value),
+            BloodPressure: parseFloat(document.getElementById('input-bp').value),
+            BMI: parseFloat(document.getElementById('input-bmi').value),
+            Cholesterol: parseFloat(document.getElementById('input-cholesterol').value),
+            HbA1c: parseFloat(document.getElementById('input-hba1c').value),
+            SleepHours: parseFloat(document.getElementById('input-sleep').value),
+            PhysicalActivity: parseFloat(document.getElementById('input-activity').value),
+            Smoking: parseInt(document.getElementById('input-smoking').value),
+            Alcohol: parseInt(document.getElementById('input-alcohol').value),
+            FamilyHistory: parseInt(document.getElementById('input-family').value),
+            // Placeholder values for columns not in UI, assumed to be mean-imputed on server side:
+            OxygenSaturation: 97.5,
+            LengthOfStay: 2,
+            Triglycerides: 150,
+            DietScore: 5,
+            StressLevel: 5
+        };
+    }
+
+    function renderResults(results) {
+        const container = document.getElementById('results-container');
+        
+        if (!results || !results.probabilities || results.probabilities.length === 0) {
+            container.innerHTML = `<div class="p-8 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-300 rounded-lg shadow-md max-w-4xl mx-auto">
+                <p class="font-bold text-xl mb-2">Prediction Failed</p>
+                <p>The API returned an invalid prediction result. Check server logs for internal errors.</p>
+            </div>`;
+            return;
+        }
+        
+        // Find the highest probability and corresponding condition
+        const maxProba = Math.max(...results.probabilities);
+        const maxIndex = results.probabilities.indexOf(maxProba);
+        const predictedCondition = results.predictedCondition || ENCODED_CLASSES[maxIndex];
+        const confidence = (maxProba * 100).toFixed(1);
+
+        let riskLevel;
+        let riskColor;
+        let riskIcon;
+
+        // Determine Risk Level based on confidence score (adjustable thresholds)
+        if (predictedCondition === 'Healthy' && maxProba > 0.6) {
+            riskLevel = "NORMAL RISK"; riskColor = "risk-low"; riskIcon = 'check_circle';
+        } else if (maxProba < 0.5) {
+            // FIX: Use 'Uncertain' language to avoid misdiagnosing low-confidence results
+            riskLevel = "UNCERTAIN RISK"; riskColor = "risk-medium"; riskIcon = 'help_center'; 
+        } else if (maxProba < 0.75) {
+            riskLevel = "MODERATE RISK"; riskColor = "risk-medium"; riskColor = 'risk-medium'; riskIcon = 'warning';
+        } else {
+            riskLevel = "HIGH RISK"; riskColor = "risk-high"; riskIcon = 'favorite';
+        }
+
+        // Handle Tailwind dynamic class rendering safety
+        const safeRiskColorClass = riskColor.replace('-', '-500'); // Ensure we use a direct color class (e.g. risk-low -> text-risk-low)
+
+        const riskContent = `
+            <header class="mb-8 pb-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-800 dark:text-white">
+                        Health Profile & Predictive Outcome
+                    </h2>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2 flex items-center">
+                        <span class="material-symbols-outlined text-teal-600 mr-2">tune</span>
+                        Risk Summary & Feature Insights
+                    </p>
+                </div>
+                <button id="dark-mode-toggle" onclick="toggleDarkMode()" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-600">
+                    <span id="dark-mode-icon" class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </header>
+
+            <div class="p-6 rounded-xl shadow-2xl border-4 border-${riskColor} bg-white dark:bg-gray-800">
+                <div class="flex items-center text-${riskColor} gap-4">
+                    <span class="material-symbols-outlined text-4xl">${riskIcon}</span>
+                    <h3 class="text-3xl font-extrabold tracking-tight text-${riskColor} ">
+                        Predicted Health Risk: ${riskLevel}
+                    </h3>
+                </div>
+                <p class="mt-2 text-lg text-gray-800 dark:text-gray-200">
+                    The model's strongest prediction is 
+                    <span class="font-bold">${predictedCondition}</span> with a confidence of 
+                    <span class="font-bold">${confidence}%</span>.
+                    <span class="block mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        ${riskLevel.includes('UNCERTAIN') ? "The model lacks definitive evidence; further testing is recommended." : "This score suggests high certainty in the prediction based on current factors."}
+                    </span>
+                </p>
+            </div>
+
+            <div class="mt-8 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                <h3 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 border-b pb-2 mb-4 flex items-center">
+                    <span class="material-symbols-outlined text-teal-600 mr-2">insights</span>
+                    Top Contributing Factors (SHAP Analysis)
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    The model weighted the following features most highly for this specific prediction:
+                </p>
+                <div class="space-y-3">
+                    ${results.explanations.map(exp => `
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-medium text-gray-800 dark:text-gray-200">${exp.feature}:</span>
+                            <span class="font-bold px-3 py-1 rounded-full text-xs 
+                                ${exp.risk > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">
+                                ${exp.risk > 0 ? 'RISK INCREASER' : 'RISK DECREASER'} (${(Math.abs(exp.risk) * 100).toFixed(1)}%)
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="mt-8 p-6 bg-gray-100 dark:bg-gray-700 rounded-xl shadow-lg">
+                <h3 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 border-b pb-2 mb-4">
+                    Full Probability Distribution
+                </h3>
+                <div class="space-y-4">
+                    ${ENCODED_CLASSES.map((condition, index) => {
+                        const proba = results.probabilities[index];
+                        const percentage = (proba * 100).toFixed(1);
+                        const isHighest = condition === predictedCondition;
+                        
+                        let barColor = isHighest ? 'bg-teal-600' : 'bg-gray-300';
+                        if (condition !== 'Healthy' && isHighest) barColor = 'bg-risk-high';
+                        if (condition === 'Healthy' && isHighest) barColor = 'bg-risk-low';
+
+                        return `
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-medium ${isHighest ? 'text-lg text-gray-800 dark:text-white' : 'text-base text-gray-600 dark:text-gray-400'}">
+                                        ${condition}
+                                    </span>
+                                    <span class="font-extrabold ${isHighest ? 'text-xl text-gray-800 dark:text-white' : 'text-lg text-gray-700 dark:text-gray-300'}">
+                                        ${percentage}%
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                                    <div
+                                        class="h-3 rounded-full ${barColor} transition-all duration-500"
+                                        style="width: ${percentage}%"
+                                    ></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        container.innerHTML = riskContent;
+    }
+
+    async function predictRisk() {
+        const rawData = collectPatientData();
+        
+        // Input validation (basic check)
+        if (rawData.Age < 18 || isNaN(rawData.Age) || isNaN(rawData.Glucose) || rawData.Glucose <= 0 || isNaN(rawData.BloodPressure) || rawData.BloodPressure <= 0 ) {
+            // Enhanced validation and non-blocking message
+            document.getElementById('results-container').innerHTML = `
+                <div class="p-8 bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500 text-yellow-700 dark:text-yellow-300 rounded-lg shadow-md max-w-4xl mx-auto">
+                    <p class="font-bold text-xl mb-2">Input Validation Error</p>
+                    <p>Please ensure Age is 18+, and Glucose/Blood Pressure fields have valid, positive entries.</p>
+                </div>
+            `;
+            return;
+        }
+
+        setPredicting(true);
+        document.getElementById('results-container').innerHTML = `
+            <div class="flex items-center justify-center h-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl mx-auto">
+                <span class="material-symbols-outlined text-teal-600 text-6xl animate-spin mr-4">autorenew</span>
+                <p class="text-xl font-semibold text-teal-700 dark:text-teal-400">Processing complex diagnosis...</p>
+            </div>
+        `;
+
+        // --- REAL-WORLD API CALL ---
+        try {
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rawData)
+            });
+
+            if (!response.ok) {
+                // Read error message from the server if available
+                const errorText = await response.text();
+                throw new Error(`Server returned status: ${response.status}. Details: ${errorText.substring(0, 100)}...`);
+            }
+
+            const results = await response.json();
+            renderResults(results);
+
+        } catch (error) {
+            console.error("API Call Failed:", error);
+            document.getElementById('results-container').innerHTML = `
+                <div class="p-8 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-300 rounded-lg shadow-md max-w-4xl mx-auto">
+                    <p class="font-bold text-xl mb-2">Connection/Server Error</p>
+                    <p class="text-sm mt-2">Could not get prediction. Ensure <code>server.py</code> is running without errors in your terminal. Error: ${error.message}</p>
+                </div>
+            `;
+        } finally {
+            setPredicting(false);
+        }
+    }
+</script>
+</body>
+</html>
