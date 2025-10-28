@@ -19,14 +19,6 @@ The project demonstrates a robust, end-to-end MLOps workflow, successfully addre
 
 ---
 
-## 🛠️ Project Structure
-
-For reference, the project directory is structured as follows:
-
-healthcare-app/ ├── server.py # Python Flask API (Pre-processing & Model Inference) ├── patient_app.html # Frontend UI (HTML, JS, Tailwind) ├── healthcaer_risk_model.pkl # The final, SMOTE-ENN trained XGBoost model. ├── scaler.pkl # The saved Standard Scaler object (used for metadata/comparison). └── label_encoder.pkl # Decodes numerical predictions (0, 1, 2...) into disease names.
-
-
----
 
 ## 🚀 Getting Started
 
