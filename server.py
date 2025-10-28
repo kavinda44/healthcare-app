@@ -9,8 +9,7 @@ import sys
 app = Flask(__name__)
 CORS(app) 
 
-# --- OUTLIER CAPPING FUNCTION & DIAGNOSTIC RANGES (Applied to raw_df) ---
-# NOTE: These values should still be updated with your actual training boundaries.
+
 CAP_BOUNDS = {
     'Glucose': {'lower': 75, 'upper': 250}, 'Blood Pressure': {'lower': 90, 'upper': 170},
     'BMI': {'lower': 18, 'upper': 40}, 'Cholesterol': {'lower': 150, 'upper': 300},
@@ -20,7 +19,7 @@ CAP_BOUNDS = {
     'Diet Score': {'lower': 1, 'upper': 10}, 'Stress Level': {'lower': 1, 'upper': 10}
 }
 
-# NOTE: YOU MUST REPLACE THE PLACEHOLDERS HERE WITH YOUR ACTUAL MEAN/STD VALUES!
+
 SAVED_SCALING_STATS = {
     'Glucose': {'mean': 125.0, 'std': 30.0}, 
     'Blood Pressure': {'mean': 128.0, 'std': 18.0},
@@ -29,13 +28,13 @@ SAVED_SCALING_STATS = {
     'HbA1c': {'mean': 6.2, 'std': 1.2}, 
     'Sleep Hours': {'mean': 7.2, 'std': 1.5},
     'Physical Activity': {'mean': 180.0, 'std': 100.0}, 
-    'Oxygen Saturation': {'mean': 97.5, 'std': 0.0}, # <-- Assuming your STD for this was 0 in training
+    'Oxygen Saturation': {'mean': 97.5, 'std': 0.0}, 
     'LengthOfStay': {'mean': 3.5, 'std': 2.0}, 
     'Triglycerides': {'mean': 150.0, 'std': 50.0},
     'Diet Score': {'mean': 5.0, 'std': 2.0}, 
     'Stress Level': {'mean': 5.0, 'std': 2.0}
 }
-# ------------------------------------------------------------------------
+
 
 def cap_outliers_server(df, bounds):
     """Applies capping to continuous features based on defined boundaries."""
@@ -45,7 +44,7 @@ def cap_outliers_server(df, bounds):
             df[col] = np.where(df[col] < limits['lower'], limits['lower'], df[col])
     return df
 
-# --- 1. GLOBAL ASSET LOADING ---
+
 try:
     with open('healthcare_risk_model.pkl', 'rb') as f:
         model = pickle.load(f)
@@ -74,12 +73,12 @@ except Exception as e:
     print(f"Error loading assets. Please check file names and directory. Error: {e}")
     sys.exit(1) 
     
-# --- 2. THE API ENDPOINT ---
+
 @app.route('/api/predict', methods=['POST'])
 def predict():
     data = request.get_json(force=True)
     
-    # --- Input Mapping and Raw DF Creation ---
+  
     key_mapping = {
         'Age': 'Age', 'Gender': 'Gender', 'Glucose': 'Glucose', 
         'BloodPressure': 'Blood Pressure', 'BMI': 'BMI', 'Cholesterol': 'Cholesterol', 
@@ -110,55 +109,55 @@ def predict():
     raw_df_data = {k: input_data.get(k) for k in raw_feature_names_to_use}
     raw_df = pd.DataFrame([raw_df_data])
     
-    # --- 2b. RE-RUN FULL PRE-PROCESSING PIPELINE ---
+  
     
-    # 1. Apply Capping 
+    
     raw_df = cap_outliers_server(raw_df, CAP_BOUNDS)
 
-    # 2. Feature Engineering
+   
     raw_df['Age'] = pd.to_numeric(raw_df['Age'], errors='coerce')
     bins = [0, 18, 40, 65, np.inf]
     labels_raw = ['AgeGroup_Child', 'AgeGroup_Age_Adult', 'AgeGroup_Age_Middle_Aged', 'AgeGroup_Age_Senior'] 
     raw_df['AgeGroup'] = pd.cut(raw_df['Age'], bins=bins, labels=labels_raw, right=False)
     
-    # 3. Encoding
+    
     processed_df = raw_df.drop('Age', axis=1).copy()
     processed_df = pd.get_dummies(processed_df, columns=['Gender', 'AgeGroup'], drop_first=True, dtype=int)
     
-    # 4. Alignment
+    
     condition_dummies = [col for col in MODEL_FEATURES if col.startswith('Medical Condition_')]
     for col in condition_dummies:
         processed_df[col] = 0
     
     final_X = processed_df.reindex(columns=MODEL_FEATURES, fill_value=0)
     
-    # --- FINAL FIX A: MANUAL STANDARD SCALING (With Zero-Division Check) ---
+   
     try:
         for col in SCALING_COLS_ORDERED:
             mean = SAVED_SCALING_STATS[col]['mean']
             std = SAVED_SCALING_STATS[col]['std']
             
             if std == 0:
-                # FIX: If STD is 0, set scaled value to 0. Avoids division by zero error.
+               
                 final_X[col] = 0.0
             else:
-                # Standard Scaling: (value - mean) / standard deviation
+               
                 final_X[col] = (final_X[col] - mean) / std 
         
     except Exception as scale_e:
         print(f"Manual Standard Scaling Failed. Error: {scale_e}")
         return jsonify({"error": "Prediction processing failed: Scaling Error."}), 500
 
-    # --- 2c. MAKE PREDICTION ---
+    
     X_predict = final_X[MODEL_FEATURES].values 
     
     prediction_encoded = model.predict(X_predict)[0]
     prediction_proba = model.predict_proba(X_predict)[0].tolist()
     
-    # Decode the result
+  
     predicted_condition = label_encoder.inverse_transform([prediction_encoded])[0]
     
-    # --- 2d. RETURN RESULT ---
+    
     explanations = []
     if predicted_condition == 'Hypertension':
         explanations = [{'feature': 'High Blood Pressure', 'risk': 0.35}, {'feature': 'Age Group (Senior)', 'risk': 0.15}]

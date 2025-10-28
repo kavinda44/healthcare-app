@@ -10,14 +10,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
 <script>
         tailwind.config = {
-            darkMode: "class", // Enable class-based dark mode
+            darkMode: "class", 
             theme: {
                 extend: {
                     colors: {
                         "primary": "#047878",
                         "teal-600": "#047878", 
                         "background-light": "#f6f8f8",
-                        "background-dark": "#112121", // Dark background
+                        "background-dark": "#112121", 
                         "risk-high": "#ef4444", 
                         "risk-medium": "#f97316",
                         "risk-low": "#10b981", 
@@ -220,21 +220,21 @@
 </div>
 
 <script>
-    // --- API Configuration ---
+    
     const API_ENDPOINT = 'http://127.0.0.1:5000/api/predict';
 
-    // Decoded Labels from LabelEncoder (MUST match the order in your label_encoder.pkl)
+    
     const ENCODED_CLASSES = [
         'Arthritis', 'Asthma', 'Cancer', 'Diabetes', 'Healthy', 'Hypertension', 'Obesity'
     ];
     
-    // --- UI HELPER FUNCTIONS ---
+    
     function updateRangeValue(inputId, spanId, suffix) {
         document.getElementById(spanId).textContent = document.getElementById(inputId).value + suffix;
     }
 
     function initializeSliders() {
-        // Initialize all range inputs and display their current value
+       
         document.querySelectorAll('input[type="range"]').forEach(input => {
             const spanId = input.id.replace('input-', '') + '-value';
             const suffix = input.id === 'input-sleep' ? ' hrs' : ' mins';
@@ -259,7 +259,7 @@
         }
     }
 
-    // --- DARK MODE LOGIC ---
+    
     function checkDarkModePreference() {
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -285,12 +285,12 @@
         }
     }
 
-    // Call on load to set initial state
+   
     checkDarkModePreference();
 
-    // --- CORE PREDICTION LOGIC ---
+    
     function collectPatientData() {
-        // Collect raw values from the UI (matching the features your Python server expects)
+        
         return {
             Age: parseInt(document.getElementById('input-age').value),
             Gender: document.getElementById('input-gender').value,
@@ -304,7 +304,7 @@
             Smoking: parseInt(document.getElementById('input-smoking').value),
             Alcohol: parseInt(document.getElementById('input-alcohol').value),
             FamilyHistory: parseInt(document.getElementById('input-family').value),
-            // Placeholder values for columns not in UI, assumed to be mean-imputed on server side:
+           
             OxygenSaturation: 97.5,
             LengthOfStay: 2,
             Triglycerides: 150,
@@ -324,7 +324,7 @@
             return;
         }
         
-        // Find the highest probability and corresponding condition
+       
         const maxProba = Math.max(...results.probabilities);
         const maxIndex = results.probabilities.indexOf(maxProba);
         const predictedCondition = results.predictedCondition || ENCODED_CLASSES[maxIndex];
@@ -334,11 +334,11 @@
         let riskColor;
         let riskIcon;
 
-        // Determine Risk Level based on confidence score (adjustable thresholds)
+        
         if (predictedCondition === 'Healthy' && maxProba > 0.6) {
             riskLevel = "NORMAL RISK"; riskColor = "risk-low"; riskIcon = 'check_circle';
         } else if (maxProba < 0.5) {
-            // FIX: Use 'Uncertain' language to avoid misdiagnosing low-confidence results
+           
             riskLevel = "UNCERTAIN RISK"; riskColor = "risk-medium"; riskIcon = 'help_center'; 
         } else if (maxProba < 0.75) {
             riskLevel = "MODERATE RISK"; riskColor = "risk-medium"; riskColor = 'risk-medium'; riskIcon = 'warning';
@@ -346,8 +346,8 @@
             riskLevel = "HIGH RISK"; riskColor = "risk-high"; riskIcon = 'favorite';
         }
 
-        // Handle Tailwind dynamic class rendering safety
-        const safeRiskColorClass = riskColor.replace('-', '-500'); // Ensure we use a direct color class (e.g. risk-low -> text-risk-low)
+        
+        const safeRiskColorClass = riskColor.replace('-', '-500'); 
 
         const riskContent = `
             <header class="mb-8 pb-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -465,7 +465,7 @@
             </div>
         `;
 
-        // --- REAL-WORLD API CALL ---
+        
         try {
             const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
@@ -474,7 +474,7 @@
             });
 
             if (!response.ok) {
-                // Read error message from the server if available
+               
                 const errorText = await response.text();
                 throw new Error(`Server returned status: ${response.status}. Details: ${errorText.substring(0, 100)}...`);
             }
