@@ -73,8 +73,10 @@ jobs:
         with:
           app-name: 'vitalsync'
           slot-name: 'Production'
+          options: '-p PYTHON_VERSION=3.10'
 
           
+
 
 
 
