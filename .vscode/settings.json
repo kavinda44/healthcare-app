@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/83036f03-1481-49ee-91b0-a7d424520924/resourceGroups/VitalsyncGroup/providers/Microsoft.Web/sites/vitalsync",
+    "appService.deploySubpath": "."
+}
