@@ -63,9 +63,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_9829F8A84C0048858D5FF7E3FEBED392 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_26FBE7D8C21546579266E21C3EC0CC33 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0A9F309013474733AC8FFB45A66329D6 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_EDA7FB2CAE2042D6B8A3954DCF7184A2 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5FA11380712C42198A93D1916D3E38EF }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AAB53F2B476A49ADB602EAED43E5AE54 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -73,10 +73,4 @@ jobs:
         with:
           app-name: 'vitalsync'
           slot-name: 'Production'
-          options: '-p PYTHON_VERSION=3.10'
-
           
-
-
-
-
