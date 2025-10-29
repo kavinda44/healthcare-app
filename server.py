@@ -171,6 +171,7 @@ def predict():
     max_proba = max(prediction_proba)
     
     return jsonify({
+        
         'predictedCondition': predicted_condition,
         'probabilities': prediction_proba,
         'confidence': f"{max_proba * 100:.2f}%",
